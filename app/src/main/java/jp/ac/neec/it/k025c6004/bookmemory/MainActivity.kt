@@ -52,19 +52,31 @@ class MainActivity : AppCompatActivity() {//ライフサイクル開始
         list = findViewById(R.id.listBooks)//リストを宣言
         search = findViewById(R.id.kensakuword)//検索ボックス宣言
 
-        list.onItemClickListener = ListItemClickListener()
+        adapter = SimpleCursorAdapter(
+            this,
+            android.R.layout.simple_list_item_2,
+            null, // ← 最初はなし
+            arrayOf("title", "authors"),
+            intArrayOf(android.R.id.text1, android.R.id.text2),
+            0
+        )
+        list.adapter = adapter
+
+        //list.onItemClickListener = ListItemClickListener()
+        list.setOnItemClickListener { _, _, _, id ->
+            startActivity(
+                Intent(this, EditActivity::class.java)
+                    .putExtra(Nav.EXTRA_ROW_ID, id)
+            )
+        }
         //リストにeventリスナ設定
 
         findViewById<Button>(R.id.btnWant).setOnClickListener { status = "want"; reloadList(search.text.toString()) }
         findViewById<Button>(R.id.btnRead).setOnClickListener { status = "read"; reloadList(search.text.toString()) }
         //ここでフラグの値の変更を設定。
         // 同時にリロードリストにサーチに入ってる値を突っ込む。一々空欄になるの鬱陶しいでしょう？
-       findViewById<Button>(R.id.addbook).setOnClickListener {
-            // 新規 → _idなしでEdit
-           // iに放り込む値とか何処のインテント開くかをまとめてエディットランチャーに渡してる
-            val i = Intent(this@MainActivity, SearchActivity::class.java)
-            editLauncher.launch(i)
-       //返ってきたオブジェクトを.launchこれで呼ぶと結果受け取ってくれるらしい。
+        findViewById<Button>(R.id.addbook).setOnClickListener {
+            startActivity(Intent(this, SearchActivity::class.java))
         }
         findViewById<Button>(R.id.kensaku).setOnClickListener {
             reloadList(search.text.toString())
@@ -82,8 +94,8 @@ class MainActivity : AppCompatActivity() {//ライフサイクル開始
                 //いつもの通り何処の画面開けって命令
                 //putExtraで追加データを渡して開く
                 .putExtra(Nav.EXTRA_ROW_ID, id)
-            //Q 左おめぇだれだよカス A DBの行番号だよはったおすぞ。右誰だよ。リストの何番目かだよ殺すぞ
-            editLauncher.launch(i)//インテントの値I突っ込んで開く。インテントに梱包された今のデータ
+            //Q 左おめぇだれだよ A DBの行番号だよ。右誰だよ。リストの何番目かだよ
+            startActivity(i)//インテントの値I突っ込んで開く。インテントに梱包された今のデータ
         //終わったら何するかのめいれいはさっきのリザルトのところに
         }
     }
@@ -106,7 +118,7 @@ class MainActivity : AppCompatActivity() {//ライフサイクル開始
             if (!titleLike.isNullOrBlank()) add("%$titleLike%")//検索ワードを後ろのはてなに。渡された引数が入る。
         }.toTypedArray()//あとのdb.queryがjavaなので必要らしい。
 
-        cursor = db.query(//ここでWhere句を生成コイツを下でリストに渡してやる。順番通りね、、、？
+        val newCursor = db.query(//ここでWhere句を生成コイツを下でリストに渡してやる。順番通りね、、、？
             "books",//from
             arrayOf("_id", "title", "authors"),//セレクトの中に突っ込む
             sel,//ウェアー句
@@ -115,23 +127,7 @@ class MainActivity : AppCompatActivity() {//ライフサイクル開始
             null,//使わん
             "title COLLATE NOCASE"//これで並び替え
         )
-
-        if (adapter == null) {
-            adapter = SimpleCursorAdapter(
-                //ここで初回の時はアダプターがヌルなので不通にアダプター作る。リストセット
-                this,
-                android.R.layout.simple_list_item_2,
-                cursor,
-                arrayOf("title", "authors"),
-                intArrayOf(android.R.id.text1, android.R.id.text2),
-                //マッピングっていうんでしたっけ？あれ。何処の部品にどこ突っ込むか順番通りいれてる。
-                0
-            )
-            list.adapter = adapter
-        } else {//二回目は普通に突っ込んで更新
-            adapter?.changeCursor(cursor)
-        //アダプター内のcursorを新しくする。上で作ったやつ。アダプターを経由してリストビューに戻してやる。
-        }
+    adapter?.changeCursor(newCursor)
     }
     override fun onResume() {//ユーザーが見える場所に出る直前に起動。ちゃんと最新のリストをお届け
         super.onResume()
@@ -141,7 +137,7 @@ class MainActivity : AppCompatActivity() {//ライフサイクル開始
 
     override fun onDestroy() {//ここでいったんぶっ壊してライフサイクル終わり
         adapter?.changeCursor(null)//アダプタを空にして切り離す。
-        cursor?.close()//dbを閉じてリソース開放
+        // dbを閉じてリソース開放
         helper.close()//dbを閉じようねメモリリークはやばい
         super.onDestroy()
     }

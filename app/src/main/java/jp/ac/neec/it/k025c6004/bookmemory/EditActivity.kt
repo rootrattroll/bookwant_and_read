@@ -108,7 +108,7 @@ class EditActivity : AppCompatActivity() {//ここは変わらんやろ
                     bindString(1, titleView.text.toString())
                     bindString(2, authorView.text.toString())
                     bindString(3, memoView.text.toString())
-                    bindString(4, if (statusSwitch.isChecked) "want" else "read")
+                    bindString(4, if (statusSwitch.isChecked) "want" else "read")//本当ならこいつはbooleanの1と0でよかった。
                     bindLong(5, rowId!!)
                 }.executeUpdateDelete()//削除や更新実行。既存行に
             }

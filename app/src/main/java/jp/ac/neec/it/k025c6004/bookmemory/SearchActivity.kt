@@ -73,7 +73,7 @@ class SearchActivity : AppCompatActivity() {
                 //actionIDでトリガーかどうか判定
                 btnSearch.performClick()//検索を直接呼び出す。
                 true//ここでtrueにすると終わり。
-            // やらないと改行も同時に起きるっぽい？それはそれでおもろい
+            // やらないと改行も同時に起きるっぽい？それはそれでおもろいけど要らないっしょ
             } else false
         }
 
@@ -109,7 +109,7 @@ class SearchActivity : AppCompatActivity() {
         //一々マスターをいじるバカがどこにいるよ
 
 
-        //ここからみんな大嫌いコルーーーーーーチン相変わらずよくわかんないねぇ！？
+        //ここからコルーチン相変わらずよくわかんないねぇ！？
         lifecycleScope.launch(Dispatchers.IO) {//ネットワーク向きのスレッド起動。アクティビティー雑に終わらせても一緒に死んでくれていいようにlifecycleで呼ぶ。
             try {
                 val json = httpGet(url)
